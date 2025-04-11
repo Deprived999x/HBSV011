@@ -1,0 +1,103 @@
+async function loadTaxonomyData() {
+    try {
+        // Get the base URL for resources
+        const baseUrl = determineBaseUrl();
+        console.log("Using base URL for resources:", baseUrl);
+        
+        // Use the base URL for each fetch
+        const group1Response = await fetch(`${baseUrl}app/data/hbs-taxonomy-g1-r010.json`);
+        if (!group1Response.ok) {
+            console.error(`Failed to load Group 1 data: ${group1Response.status}`, 
+                         `URL attempted: ${baseUrl}app/data/hbs-taxonomy-g1-r010.json`);
+            throw new Error(`Failed to load Group 1 data: ${group1Response.status}`);
+        }
+        const group1Data = await group1Response.json();
+        
+        const group2Response = await fetch(`${baseUrl}app/data/hbs-taxonomy-g2-r010.json`);
+        if (!group2Response.ok) {
+            throw new Error(`Failed to load Group 2 data: ${group2Response.status}`);
+        }
+        const group2Data = await group2Response.json();
+        
+        const group3Response = await fetch(`${baseUrl}app/data/hbs-taxonomy-g3-r010.json`);
+        if (!group3Response.ok) {
+            throw new Error(`Failed to load Group 3 data: ${group3Response.status}`);
+        }
+        const group3Data = await group3Response.json();
+        
+        const group4Response = await fetch(`${baseUrl}app/data/hbs-taxonomy-g4-r010.json`);
+        if (!group4Response.ok) {
+            throw new Error(`Failed to load Group 4 data: ${group4Response.status}`);
+        }
+        const group4Data = await group4Response.json();
+        
+        // Also load the rules
+        try {
+            const rulesResponse = await fetch(`${baseUrl}app/data/hbs-rules-r010.json`);
+            if (rulesResponse.ok) {
+                rules = await rulesResponse.json();
+                console.log(`Loaded ${rules.absoluteRules.length} absolute rules and ${rules.suggestiveRules.length} suggestive rules`);
+            } else {
+                console.warn("Could not load rules file. Using default rules.");
+            }
+        } catch (rulesError) {
+            console.warn("Error loading rules:", rulesError);
+        }
+        
+        // Combine all data into a single structure
+        return {
+            "1": group1Data,
+            "2": group2Data, 
+            "3": group3Data,
+            "4": group4Data
+        };
+    } catch (error) {
+        console.error("Error loading taxonomy data:", error);
+        const container = document.getElementById('main-container');
+        container.innerHTML = `
+            <div style="color: red; padding: 20px; background: #ffeeee; border: 1px solid red;">
+                <strong>Error loading taxonomy data:</strong> ${error.message}<br><br>
+                <strong>Troubleshooting:</strong>
+                <ul>
+                    <li>Verify JSON files exist in the app/data directory</li>
+                    <li>File path attempted: ${determineBaseUrl()}app/data/hbs-taxonomy-g1-r010.json</li>
+                    <li>Check browser console for additional error details</li>
+                    <li>Current location: ${window.location.href}</li>
+                </ul>
+            </div>
+        `;
+        throw error;
+    }
+}
+
+// Helper function to determine the correct base URL
+function determineBaseUrl() {
+    // Get the current URL
+    const currentUrl = window.location.href;
+    console.log("Current URL:", currentUrl);
+    
+    try {
+        // Parse the URL
+        const url = new URL(currentUrl);
+        const pathname = url.pathname;
+        
+        // If we're on GitHub Pages with a repository name in the URL
+        if (url.hostname.includes('github.io')) {
+            // Extract the first part of the path after the domain, which should be the repo name
+            const pathParts = pathname.split('/').filter(part => part);
+            if (pathParts.length > 0) {
+                // Include the repo name in the base URL
+                const repoName = pathParts[0];
+                console.log(`Detected GitHub Pages repo: ${repoName}`);
+                return `/${repoName}/`;
+            }
+        }
+        
+        // For local development or other scenarios
+        console.log("Using default base URL");
+        return './';
+    } catch (e) {
+        console.error("Error determining base URL:", e);
+        return './';
+    }
+}
