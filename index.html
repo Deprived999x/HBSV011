@@ -1618,6 +1618,113 @@
         window.startRandomGeneration = startRandomGeneration;
         window.stopRandomGeneration = stopRandomGeneration;
         window.findNextUncompleted = findNextUncompleted;
+
+        // Function to process the next random parameter
+        function randomNext() {
+            if (!isRandomGenerating) return; // Stop if random generation has been disabled
+            
+            // Check if we have a valid parameter to work with
+            if (currentRandomGroup > 0 && currentRandomGroup <= 4 && 
+                taxonomyData[currentRandomGroup] && 
+                taxonomyData[currentRandomGroup].parameters[currentParameterIndex]) {
+                
+                const param = taxonomyData[currentRandomGroup].parameters[currentParameterIndex];
+                const paramId = param.id;
+                
+                // Skip if already completed or has no options
+                if (completedParams[paramId] || !param.options || param.options.length === 0) {
+                    // Move to next parameter
+                    findNextUncompleted();
+                    randomTimer = setTimeout(randomNext, randomSpeed);
+                    return;
+                }
+                
+                // Show the current parameter if it's hidden
+                const paramElement = document.getElementById(`parameter-${paramId}`);
+                if (paramElement && paramElement.classList.contains('hidden')) {
+                    paramElement.classList.remove('hidden');
+                }
+                
+                // Open the current group if it's closed
+                const groupContent = document.getElementById(`content-${currentRandomGroup}`);
+                const groupButton = document.getElementById(`group-${currentRandomGroup}`);
+                
+                if (groupContent && !groupContent.classList.contains('active')) {
+                    groupContent.classList.add('active');
+                    if (groupButton) groupButton.classList.add('active');
+                }
+                
+                // Make the group active if it's inactive
+                if (groupButton && groupButton.classList.contains('inactive')) {
+                    groupButton.classList.remove('inactive');
+                }
+                
+                // Simulate random selection of an option
+                processRandomParameter(param);
+            } else {
+                console.warn("Invalid random parameter position:", currentRandomGroup, currentParameterIndex);
+                // Reset to first group, first parameter
+                currentRandomGroup = 1;
+                currentParameterIndex = 0;
+                randomTimer = setTimeout(randomNext, randomSpeed);
+            }
+        }
+
+        // Process a random selection for a parameter
+        function processRandomParameter(param) {
+            const optionsContainer = document.getElementById(`options-${param.id}`);
+            if (!optionsContainer) {
+                findNextUncompleted();
+                randomTimer = setTimeout(randomNext, randomSpeed);
+                return;
+            }
+            
+            // Get all non-disabled options
+            const options = Array.from(optionsContainer.querySelectorAll('.option:not(.permanently-disabled)'));
+            
+            if (options.length === 0) {
+                console.warn("No available options for parameter", param.id);
+                findNextUncompleted();
+                randomTimer = setTimeout(randomNext, randomSpeed);
+                return;
+            }
+            
+            // Select random option
+            const randomIndex = Math.floor(Math.random() * options.length);
+            const selectedOption = options[randomIndex];
+            
+            // Simulate click
+            selectedOption.click();
+            
+            // Complete this parameter after a delay
+            setTimeout(() => {
+                // Find the Next button and click it
+                const nextButton = optionsContainer.querySelector('.next-button');
+                if (nextButton) {
+                    nextButton.click();
+                    
+                    // Schedule the next random selection
+                    setTimeout(() => {
+                        if (isRandomGenerating) {
+                            randomTimer = setTimeout(randomNext, randomSpeed);
+                        }
+                    }, 500);
+                } else {
+                    console.warn("Next button not found for parameter", param.id);
+                    findNextUncompleted();
+                    randomTimer = setTimeout(randomNext, randomSpeed);
+                }
+            }, randomSpeed);
+        }
+
+        // Make sure this function is available globally
+        window.randomNext = randomNext;
+
+        // Actually initialize the application when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Call the initialization function to load taxonomy data and build the interface
+            initializeApp();
+        });
     </script>
 </body>
 </html>
