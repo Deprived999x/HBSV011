@@ -12,14 +12,9 @@ const availableModels = [
     description: 'Fast and efficient image generator'
   },
   {
-    id: 'mit-han-lab/hart-0.7b-1024px',
-    name: 'HART 0.7B',
-    description: 'Efficient text-to-image model with 1024px resolution'
-  },
-  {
-    id: 'RunDiffusion/Stable-Diffusion-Unconditional', // This is an example - verify actual model ID
-    name: 'Random Generator',
-    description: 'Generates random images without using prompts'
+    id: 'black-forest-labs/FLUX.1-dev', 
+    name: 'FLUX.1 Dev',
+    description: 'Higher quality image generation model'
   }
 ];
 
