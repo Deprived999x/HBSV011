@@ -1720,6 +1720,136 @@
         // Make sure this function is available globally
         window.randomNext = randomNext;
 
+        // Function to handle option selection
+        function selectOption(paramId, optionIndex, variantIndex = null) {
+            // Get all options for this parameter
+            const optionsContainer = document.getElementById(`options-${paramId}`);
+            if (!optionsContainer) return;
+            
+            // Remove selected class from all options
+            const allOptions = optionsContainer.querySelectorAll('.option');
+            allOptions.forEach(opt => opt.classList.remove('selected'));
+            
+            // Find the selected option element
+            let selectedElement;
+            
+            if (variantIndex !== null) {
+                // For hair color with variants
+                // Find the option element for this specific variant
+                const variantElements = Array.from(allOptions).filter(el => {
+                    const optionLabel = el.querySelector('.option-label');
+                    if (!optionLabel) return false;
+                    
+                    const param = taxonomyData[paramGroups[paramId]].parameters.find(p => p.id === paramId);
+                    if (!param || !param.options[optionIndex] || !param.options[optionIndex].variants) return false;
+                    
+                    const mainOption = param.options[optionIndex];
+                    const variant = mainOption.variants[variantIndex];
+                    
+                    return optionLabel.textContent.includes(`${mainOption.name} - ${variant.name}`);
+                });
+                
+                if (variantElements.length > 0) {
+                    selectedElement = variantElements[0];
+                    // Store both main color index and variant index
+                    selections[paramId] = {
+                        mainColorIndex: optionIndex,
+                        variantIndex: variantIndex
+                    };
+                }
+            } else {
+                // For regular options
+                // Find the clicked option and add selected class
+                const optionElements = Array.from(allOptions);
+                const clickedOptionIndex = optionIndex;
+                
+                if (clickedOptionIndex >= 0 && clickedOptionIndex < optionElements.length) {
+                    selectedElement = optionElements[clickedOptionIndex];
+                    // Store selection
+                    selections[paramId] = optionIndex;
+                } else {
+                    // If we can't find the exact index, try finding by name
+                    const param = taxonomyData[paramGroups[paramId]].parameters.find(p => p.id === paramId);
+                    if (param && param.options[optionIndex]) {
+                        const optionName = param.options[optionIndex].name;
+                        selectedElement = Array.from(allOptions).find(el => {
+                            const label = el.querySelector('.option-label');
+                            return label && label.textContent.includes(optionName);
+                        });
+                        if (selectedElement) {
+                            selections[paramId] = optionIndex;
+                        }
+                    }
+                }
+            }
+            
+            // Add selected class to the chosen option
+            if (selectedElement) {
+                selectedElement.classList.add('selected');
+                
+                // Special handling for gender selection
+                if (paramId === 1) { // Assuming parameter ID 1 is gender
+                    const param = taxonomyData[paramGroups[paramId]].parameters.find(p => p.id === paramId);
+                    if (param && param.options[optionIndex]) {
+                        const gender = param.options[optionIndex].name.toLowerCase();
+                        handleFacialHairVisibility(gender.includes('female'));
+                    }
+                }
+            }
+        }
+
+        // Function to handle facial hair visibility based on gender
+        function handleFacialHairVisibility(isFemale) {
+            // Find the facial hair parameter (usually ID 23 in your data)
+            const facialHairParam = document.getElementById('parameter-23');
+            if (!facialHairParam) return;
+            
+            if (isFemale) {
+                // Hide facial hair options for females
+                facialHairParam.classList.add('gender-hidden');
+            } else {
+                // Show facial hair options for males
+                facialHairParam.classList.remove('gender-hidden');
+            }
+        }
+
+        // Function to handle modifier selection
+        function selectModifier(paramId, modifierName, optionIndex) {
+            // Get modifier container
+            const paramElement = document.getElementById(`parameter-${paramId}`);
+            if (!paramElement) return;
+            
+            // Find the modifier section
+            const modifierSection = Array.from(paramElement.querySelectorAll('.modifier')).find(el => {
+                const nameEl = el.querySelector('.modifier-name');
+                return nameEl && nameEl.textContent === modifierName;
+            });
+            
+            if (!modifierSection) return;
+            
+            // Get all options for this modifier
+            const modifierOptions = modifierSection.querySelectorAll('.modifier-option');
+            
+            // Remove selected class from all options
+            modifierOptions.forEach(opt => opt.classList.remove('selected'));
+            
+            // Add selected class to clicked option
+            if (optionIndex >= 0 && optionIndex < modifierOptions.length) {
+                modifierOptions[optionIndex].classList.add('selected');
+                
+                // Store modifier selection
+                if (!modifierSelections[paramId]) {
+                    modifierSelections[paramId] = {};
+                }
+                modifierSelections[paramId][modifierName] = optionIndex;
+            }
+        }
+
+        // Make these functions available globally
+        window.selectOption = selectOption;
+        window.handleFacialHairVisibility = handleFacialHairVisibility;
+        window.selectModifier = selectModifier;
+
         // Actually initialize the application when the page loads
         document.addEventListener('DOMContentLoaded', function() {
             // Call the initialization function to load taxonomy data and build the interface
