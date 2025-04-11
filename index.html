@@ -1515,6 +1515,104 @@
             console.log("Random generation stopped");
         }
 
+        // Function to reset all selections and start fresh
+        function resetAllSelections() {
+            // Clear all selections
+            Object.keys(selections).forEach(paramId => {
+                delete selections[paramId];
+            });
+            
+            // Clear completed params
+            Object.keys(completedParams).forEach(paramId => {
+                delete completedParams[paramId];
+            });
+            
+            // Clear modifier selections
+            Object.keys(modifierSelections).forEach(paramId => {
+                delete modifierSelections[paramId];
+            });
+            
+            // Reset UI for all groups and parameters
+            for (let groupNum = 1; groupNum <= 4; groupNum++) {
+                // Hide all params except first in first group
+                if (taxonomyData[groupNum] && taxonomyData[groupNum].parameters) {
+                    taxonomyData[groupNum].parameters.forEach((param, index) => {
+                        const paramElement = document.getElementById(`parameter-${param.id}`);
+                        if (paramElement) {
+                            if (groupNum === 1 && index === 0) {
+                                paramElement.classList.remove('hidden');
+                            } else {
+                                paramElement.classList.add('hidden');
+                            }
+                            
+                            // Clear selected options
+                            paramElement.querySelectorAll('.option.selected').forEach(option => {
+                                option.classList.remove('selected');
+                            });
+                            
+                            // Clear selected modifiers
+                            paramElement.querySelectorAll('.modifier-option.selected').forEach(option => {
+                                option.classList.remove('selected');
+                            });
+                        }
+                    });
+                }
+                
+                // Reset completed sections
+                const completedSection = document.getElementById(`completed-${groupNum}`);
+                if (completedSection) {
+                    completedSection.innerHTML = '';
+                    completedSection.classList.add('hidden');
+                }
+                
+                // Reset progress bars
+                const progressBar = document.getElementById(`progress-${groupNum}`);
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                }
+                
+                // Reset group buttons
+                const groupButton = document.getElementById(`group-${groupNum}`);
+                if (groupButton) {
+                    if (groupNum === 1) {
+                        groupButton.classList.remove('inactive');
+                        groupButton.classList.add('active');
+                    } else {
+                        groupButton.classList.add('inactive');
+                        groupButton.classList.remove('active', 'completed');
+                    }
+                }
+                
+                // Show/hide group content
+                const groupContent = document.getElementById(`content-${groupNum}`);
+                if (groupContent) {
+                    if (groupNum === 1) {
+                        groupContent.classList.add('active');
+                    } else {
+                        groupContent.classList.remove('active');
+                    }
+                }
+            }
+            
+            // Update character summary
+            updateCharacterSummary();
+            
+            // Make the random button active again
+            const randomButton = document.getElementById('random-button');
+            if (randomButton) {
+                randomButton.disabled = false;
+                randomButton.textContent = "Auto-Random";
+                randomButton.style.opacity = "";
+                randomButton.style.cursor = "pointer";
+                randomButton.style.backgroundColor = "";
+            }
+            
+            console.log("All selections reset");
+        }
+
+        // Make this function available globally
+        window.resetAllSelections = resetAllSelections;
+
         // Make sure these functions are available in the global scope
         window.toggleRandomGeneration = toggleRandomGeneration;
         window.startRandomGeneration = startRandomGeneration;
