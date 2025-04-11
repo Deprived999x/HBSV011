@@ -1376,7 +1376,19 @@
                 // Stop random generation if it's running
                 if (isRandomGenerating) {
                     isRandomGenerating = false;
-                    stopRandomGeneration();
+                    // Instead of calling stopRandomGeneration, do the actions inline
+                    if (randomTimer) {
+                        clearTimeout(randomTimer);
+                        randomTimer = null;
+                    }
+                    
+                    const randomButton = document.getElementById('random-button');
+                    if (randomButton) {
+                        randomButton.textContent = "Auto-Random";
+                        randomButton.classList.remove('active');
+                    }
+                    
+                    console.log("Random generation stopped inline");
                 }
             }
             
